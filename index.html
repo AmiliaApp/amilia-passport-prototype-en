@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Passeport Amilia</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link href="favicon.png" rel="apple-touch-icon" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <meta name="mobileoptimized" content="0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+    <script src="js/3rd/jquery.min.js" type="text/javascript"></script>
+    <script src="js/3rd/JsBarcode.all.js" type="text/javascript"></script>
+    <script src="js/3rd/bootstrap.min.js" type="text/javascript"></script>
+    <script src="js/3rd/underscore.js" type="text/javascript"></script>
+    <script src="js/3rd/backbone.js" type="text/javascript"></script>
+    <script src="js/3rd/moment.js" type="text/javascript"></script>
+
+    <script src="js/src/home.js" type="text/javascript"></script>
+    <script src="js/src/memberships.js" type="text/javascript"></script>
+    <script src="js/src/purchases.js" type="text/javascript"></script>
+    <script src="js/src/events.js" type="text/javascript"></script>
+    <script src="js/src/communications.js" type="text/javascript"></script>
+    <script src="js/src/kiosk.js" type="text/javascript"></script>
+    <script src="js/src/data.js" type="text/javascript"></script>
+    <script src="js/src/amilia-passport.js" type="text/javascript"></script>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="css/amilia-passport.css" rel="stylesheet" type="text/css">
+  </head>
+
+  <body>
+    <div id="home" class="content"></div>
+    <div id="memberships" class="content cards"></div>
+    <div id="events" class="content events"></div>
+    <div id="purchases" class="content purchases"></div>
+    <div id="communications" class="content communications"></div>
+    <div id="kiosk" class="content kiosk"></div>
+
+    <div id="side-menu">
+      <div class="navbar navbar-inverse">
+        <ul class="nav navbar-nav">
+          <li><a href="#"><i class="fa fa-fw fa-home"></i></a></li>
+          <li><a href="#memberships"><i class="fa fa-fw icomoon-membership"></i></a></li>
+          <li><a href="#events"><i class="fa fa-fw fa-calendar-check-o"></i></a></li>
+          <li><a href="#purchases"><i class="fa fa-fw fa-shopping-cart"></i></a></li>
+          <li>
+            <a href="#communications">
+              <i class="fa fa-fw fa-envelope"></i>
+              <span class="badge counter">1</span>
+            </a>
+          </li>
+          <li><a href="#kiosk"><i class="fa fa-fw fa-barcode"></i></a></li>
+        </ul>
+      </div>
+    </div>
+
+<script id="home-template" type="text/template">
+  <div class="wrapper">
+    <div class="center">
+      <h1>Amilia Passport</h1>
+      <br/>
+      <p class="lead">
+        <span class="account">Account : Drapeau Family</span>
+      </p>
+      <p>
+        <a href="#" class="change-account"><i class="fa fa-fw fa-arrow-circle-right"></i> Change account</a>
+      </p>
+    </div>
+  </div>
+</script>
+
+<script id="kiosk-template" type="text/template">
+  <div class="wrapper">
+    <div class="center">
+      <div class="card"></div>
+      <div class="message">Scan your card</div>
+      <div class="message-small">Or type in email or phone</div>
+      <div class="form-group actions">
+        <button class="btn btn-lg btn-success continue">Continue</button>
+      </div>
+      <div class="form-group input">
+        <input type="text" pattern="[0-9]*" class="form-control live-input input-lg" name="Code" placeholder="Amilia ID or Email" value="<%=input%>">
+      </div>
+    </div>
+  </div>
+</script>
+
+<script id="membership-template" type="text/template">
+  <div class="row first">
+    <div class="org">
+      <div class="logo">
+        <img src="<%=OrganizationLogoUrl%>"/>
+      </div>
+      <div class="info">
+        <div class="name"><%=OrganizationName%></div>
+        <div class="website"><%=Name%></div>
+        <br/>
+        <div class="email"><%=OrganizationEmail%></div>
+        <div class="phone"><%=OrganizationPhone%></div>
+      </div>
+    </div>
+    <div class="picture">
+      <img src="<%=ProfilePictureUrl%>"/>
+    </div>
+  </div>
+  <div class="row second">
+    <div class="person-info">
+      <div class="name"><%=FirstName%> <%=LastName%></div>
+      <canvas class="bar-code pull-left"></canvas>
+      <% if (To !== undefined) { %>
+        <div class="dates pull-right">
+          <span>Exp: <%=moment(To).format('ll')%></span>
+          <% if (moment(To).isBefore(moment())) { %>
+            <br/><span class="expired">Card expired</span>
+          <% } %> 
+        </div>
+      <% } %>
+    </div>
+  </div>
+</script>
+
+<script id="event-template" type="text/template">
+  <div class="col when">
+    <div class="start"><%=Start%></div>
+    <div class="end"><%=End%></div>
+  </div>
+  <div class="col title"><strong><%=FirstName%> @ <%=OrganizationName%></strong><br/><%=Name%></div>
+  <div class="col invoice"><a href="#" class="show-receipt btn btn-default">Facture</a></div>
+</script>
+
+<script id="communication-template" type="text/template">
+  <div class="col status"><i class="fa fa-fw fa-circle"></i></div>
+  <div class="col info">
+    <div class="line">
+      <div class="from"><%=From%>, <%=OrganizationName%></div>
+      <div class="when"><%=When%></div>
+      <div class="clear"></div>
+    </div>
+    <div class="subject"><%=Subject%></div>
+    <div class="body"><%=Body%></div>
+  </div>
+</script>
+
+<script id="purchase-template" type="text/template">
+  <div class="col org"><img src="<%=OrganizationLogoUrl%>" /></div>
+  <div class="col name"><strong><%=OrganizationName%></strong><br/><%=Name%></div>
+  <div class="col person">
+    <img src="<%=ProfilePictureUrl%>" />
+    <div class="name"><%=FirstName%></div>
+  </div>
+  <div class="col invoice"><a href="#" class="show-receipt btn btn-default">Receipt</a></div>
+</script>
+
+<script id="receipt-template" type="text/template">
+  <div class="receipt">
+    <div class="vpad">
+      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+        <tbody>
+          <tr>
+            <td>
+              <img id="imgLogo" src="http://920ba9fd3751ea583b28-4b4fba300ebd32f891e458bb2df9e92a.r6.cf2.rackcdn.com/logo101_1196.jpg" style="max-height: 120px; max-width: 230px;">
+            </td>
+            <td style="text-align: right; vertical-align: top;">
+              <a href="#" class="close"><i class="fa fa-times"></i></a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="ctl09_divHeader">
+      <div style="float: right">3/8/2016</div>
+      <div>Invoice no. 2737063</div>
+      <table cellpadding="0" cellspacing="0" class="hspace" style="margin-top: 1ex; width: 100%;">
+        <tbody>
+          <tr>
+            <td>
+              <div>
+                <div style="font-weight: bold">Client</div>
+                <div>Martin Drapeau</div>
+                <div>10410 Waverly<br>Montreal, QC<br>H3L 2W4</div>
+              </div>
+            </td>
+            <td>&nbsp;</td>
+            <td id="ctl09_shippingAddress">
+              <div>
+                <div style="font-weight: bold"></div>
+                <div></div>
+              </div>
+            </td>
+
+            <td id="ctl09_shippingAddressSpace">&nbsp;</td>
+
+            <td style="float: right;">
+              <div>
+                <div style="font-weight: bold">Organization</div>
+                <div>Sports Montréal</div>
+                <div>1000 Ave Émile-Journault<br>Montréal, QC<br>H2M 2E7</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 1ex">
+      <table class="list hspace" cellpadding="0" cellspacing="0">
+        <tbody>
+          <tr>
+            <td>
+            Ludovic Bazinet / Summer camp 2016 - Camp floor hockey option - Floor hockey, 7-8 years old - Week 7 : 8 to 12 august 2016<br>Location : Complexe Claude-Robillard<br>Schedule : Monday to Friday from 9AM to 4PM, from august 8 2016 until august 12 2016.<br>Note : Welcome at the sports center Claude-Robillard.<br><br><i class="fa fa-fw fa-book"></i> Session
+            </td>
+            <td class="cash">$159.00</td>
+            <td>&nbsp;</td>
+          </tr>
+
+          <tr><td colspan="3">&nbsp;</td></tr>
+          <tr style="font-weight: bold">
+            <td style="text-align: right; padding-right: 8px;">Subtotal</td>
+            <td class="cash">$159.00</td>
+            <td></td>
+          </tr>      
+          <tr id="ctl09_rptrItems_ctl02_trTax1" style="font-weight: bold">
+            <td style="text-align: right; padding-right: 8px;">GST (#130370943)</td>
+            <td class="cash">$0.00</td>
+            <td></td>
+          </tr>
+
+          <tr id="ctl09_rptrItems_ctl02_trTax2" style="font-weight: bold">
+            <td style="text-align: right; padding-right: 8px;">QST (#1011060931)</td>
+            <td class="cash">$0.00</td>
+            <td></td>
+          </tr>
+
+          <tr style="font-weight: bold">
+            <td style="text-align: right; padding-right: 8px;">Total</td>
+            <td class="cash">$159.00</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <div id="ctl09_divFooter" style="margin-top: 2ex">
+      Created by: martin.drapeau@amilia.com
+    </div>
+
+    <div id="footer">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+          <tr>
+            <td align="left">© 2004-2016, <strong>Amilia Corporation</strong>, All rights reserved.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <br>
+  </div>
+</script>
+
+  </body>
+</html>
